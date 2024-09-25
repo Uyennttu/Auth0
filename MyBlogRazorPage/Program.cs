@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Auth0.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using MyBlogRazorPage.Data;
 namespace MyBlogRazorPage
 {
@@ -9,7 +11,15 @@ namespace MyBlogRazorPage
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<MyBlogRazorPageContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("MyBlogRazorPageContext") ?? throw new InvalidOperationException("Connection string 'MyBlogRazorPageContext' not found.")));
-
+            builder.Services
+                .AddAuth0WebAppAuthentication(options => {
+                    options.Domain = builder.Configuration["Auth0:Domain"];
+                    options.ClientId = builder.Configuration["Auth0:ClientId"];
+                });
+            builder.Services.AddRazorPages(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Blogs");
+            });
             // Add services to the container.
             builder.Services.AddRazorPages();
 
@@ -27,6 +37,7 @@ namespace MyBlogRazorPage
             app.UseStaticFiles();
 
             app.UseRouting();
+            app.UseAuthentication();
 
             app.UseAuthorization();
 
